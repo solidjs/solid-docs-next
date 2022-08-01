@@ -1,10 +1,10 @@
-import { Link } from "solid-app-router";
+import { Link } from "@solidjs/router";
 import { createEffect, createUniqueId, onMount, ParentProps } from "solid-js";
 import tippy from "tippy.js";
+import { mergeProps } from "solid-js";
 import "tippy.js/dist/tippy.css";
 import { Title } from "./components/Main";
-import { Title as MetaTitle } from "solid-meta";
-import { usePageState } from "./components/PageStateContext";
+import { Title as MetaTitle } from "@solidjs/meta";
 
 function Anchor(props: ParentProps<{ id: string }>) {
   return (
@@ -33,10 +33,10 @@ export default {
   ssr: (props) => <>{props.children}</>,
   spa: (props) => <></>,
   h2: (props) => {
-    const { addSection } = usePageState();
-    onMount(() => {
-      addSection(props.children, props.id);
-    });
+    // const { addSection } = usePageState();
+    // onMount(() => {
+    //   addSection(props.children, props.id);
+    // });
     return (
       <h2
         {...props}
@@ -75,7 +75,7 @@ export default {
     return (
       <Link
         {...props}
-        class="text-link dark:text-link-dark break-normal border-b border-link border-opacity-0 hover:border-opacity-100 duration-100 ease-in transition leading-normal"
+        class="text-solid-default dark:text-link-dark break-normal border-b border-solid-default border-opacity-0 hover:border-opacity-100 duration-100 ease-in transition font-semibold leading-normal"
       >
         {props.children}
       </Link>
@@ -111,7 +111,31 @@ export default {
       </code>
     );
   },
-  pre: (props) => <pre {...props}>{props.children}</pre>,
+  pre: (props) => (
+    <>
+      {/* <Show when={props.filename?.length > 5}>
+        <span {...props} class="h-4 p-1">
+          {props.filename}
+        </span>
+      </Show> */}
+      <pre
+        {...mergeProps(props, {
+          get class() {
+            return (
+              props.className +
+              " " +
+              (props.bad ? "border-red-400 border-1" : "")
+            );
+          },
+          get className() {
+            return undefined;
+          },
+        })}
+      >
+        {props.children}
+      </pre>
+    </>
+  ),
   "data-lsp": (props) => {
     const id = createUniqueId();
     createEffect(() => {
