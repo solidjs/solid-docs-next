@@ -1,7 +1,10 @@
 import { NextSection } from "~/components/NextSection";
 import Snippet from "~/components/Snippet";
 import { CodeTabs } from "~/components/Tabs";
-import { FrameworkAside, Aside } from "~/components/FrameworkAside";
+import {
+  FrameworkAside,
+  Aside,
+} from "~/components/configurable/FrameworkAside";
 import { BasicCounter } from "./components/BasicCounter";
 import { BasicBookshelf } from "./components/BasicBookshelf";
 import Counter1 from "./snippets/Counter1.mdx";
@@ -26,8 +29,6 @@ import App3js from "./snippets/bookshelf/App3js.mdx";
 import App3ts from "./snippets/bookshelf/App3ts.mdx";
 import App4js from "./snippets/bookshelf/App4js.mdx";
 import App4ts from "./snippets/bookshelf/App4ts.mdx";
-
-<title>Adding Interactivity with State</title>
 
 # Adding Interactivity with State
 
@@ -289,9 +290,6 @@ Our `BookList` component now looks like this:
     ],
   }}
 />
-
-{/* TODO: Add mention of Angular's `trackBy` and add `<Aside>` advanced */}
-
 ## Derived state
 
 Solid makes it easy to track _derived state_. You can think of derived state as a computation based only on other information you're already tracking in state. In our Bookshelf application, an example of derived state would be the number of books on our list: it's the length of our `books` array at any point in time.
