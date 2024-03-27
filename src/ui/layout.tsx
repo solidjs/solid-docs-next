@@ -3,7 +3,7 @@ import { ParentComponent, Show, children, Suspense } from "solid-js";
 import { MainNavigation } from "~/ui/layout/main-navigation";
 import { MainHeader } from "./layout/main-header";
 import { Hero } from "./layout/hero";
-import { cache, createAsync, useMatch } from "@solidjs/router";
+import { cache, createAsync, useLocation, useMatch } from "@solidjs/router";
 import { DocsLayout } from "./docs-layout";
 import { PageStateProvider } from "~/data/page-state";
 import { Alert } from "@kobalte/core";
@@ -21,6 +21,71 @@ import {
 import { PathMatch } from "@solidjs/router/dist/types";
 
 const PROJECTS = ["solid-router", "solid-start", "solid-meta"] as const;
+
+export enum Project {
+	Core = "",
+	Router = "/solid-router",
+	Start = "/solid-start",
+	Meta = "/solid-meta",
+}
+
+interface CurrentRouteMetaData {
+	project: Project | null;
+	locale: string;
+	isProjectRoot: boolean;
+}
+
+export const useCurrentRouteMetaData = (): CurrentRouteMetaData => {
+	let currentPath = useLocation().pathname;
+
+	// Trim trailing slash
+	currentPath = currentPath.endsWith("/")
+		? currentPath.slice(0, -1)
+		: currentPath;
+
+	const pathParts = currentPath.split("/").filter(Boolean);
+	const projectOrLocale: string = pathParts[0];
+
+	let returnObject: CurrentRouteMetaData = {
+		isProjectRoot: true,
+		locale: "",
+		project: null,
+	};
+
+	if (SUPPORTED_LOCALES.includes(projectOrLocale)) {
+		if (pathParts.length > 2) {
+			returnObject.isProjectRoot = false;
+		}
+
+		returnObject.locale = projectOrLocale;
+		checkPathBeyondLocale(pathParts[1] ?? "");
+	} else {
+		if (pathParts.length > 1) {
+			returnObject.isProjectRoot = false;
+		}
+
+		checkPathBeyondLocale(pathParts[0] ?? "");
+	}
+
+	function isInProjectEnum(projectPath: string): boolean {
+		return Object.values(Project).includes(projectPath as Project);
+	}
+
+	function checkPathBeyondLocale(path: string) {
+		if (path.length > 0) {
+			path = "/" + path;
+		}
+
+		if (isInProjectEnum(path)) {
+			returnObject.project = path as Project;
+		} else {
+			returnObject.isProjectRoot = false;
+			returnObject.project = "" as Project;
+		}
+	}
+
+	return returnObject;
+};
 
 function getDefaultTree(project: (typeof PROJECTS)[number]) {
 	switch (project) {
@@ -113,18 +178,19 @@ export const Layout: ParentComponent<{ isError?: boolean }> = (props) => {
 
 	// is i18n main
 	// is en project
-	const isI18nOrProject = useMatch(() => "/:localeOrProject/*", {
+	const isProjectContent = useMatch(() => "/:localeOrProject/*", {
 		localeOrProject: [...SUPPORTED_LOCALES, ...PROJECTS],
 	});
 
-	const isCore = useMatch(() => "/*");
-
-	const isRoot = useMatch(() => "/:localeOrProject?", {
-		localeOrProject: [...SUPPORTED_LOCALES, ...PROJECTS],
-	});
+	const isCoreContent = useMatch(() => "/*");
 
 	const entries = createAsync(
-		() => getDocsMetadata(isI18nOrProject(), isTranslatedProject(), isCore()),
+		() =>
+			getDocsMetadata(
+				isProjectContent(),
+				isTranslatedProject(),
+				isCoreContent()
+			),
 		{ deferStream: true }
 	);
 
@@ -147,7 +213,7 @@ export const Layout: ParentComponent<{ isError?: boolean }> = (props) => {
 					<Show when={entries()}>
 						{(data) => <MainHeader tree={data().tree} />}
 					</Show>
-					<Show when={isRoot()} keyed>
+					<Show when={useCurrentRouteMetaData().isProjectRoot} keyed>
 						<Hero />
 					</Show>
 					<div class="relative mx-auto flex max-w-8xl flex-auto justify-center custom-scrollbar pt-10">
@@ -169,7 +235,7 @@ export const Layout: ParentComponent<{ isError?: boolean }> = (props) => {
 						</Show>
 						<main class="w-full md:max-w-2xl flex-auto px-4 pt-2 md:pb-16 lg:max-w-none prose prose-slate dark:prose-invert dark:text-slate-300">
 							<Show
-								when={!isRoot()}
+								when={!useCurrentRouteMetaData().isProjectRoot}
 								keyed
 								fallback={
 									<article class="px-2 md:px-10 expressive-code-overrides overflow-y-auto">

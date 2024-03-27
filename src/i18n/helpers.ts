@@ -1,5 +1,6 @@
-import { useMatch } from "@solidjs/router";
+import { useLocation, useMatch } from "@solidjs/router";
 import { SUPPORTED_LOCALES } from "./config";
+import { useCurrentRouteMetaData } from "~/ui/layout";
 
 export function getLocaleFromPathname(pathname: string) {
 	return pathname.split("/")[1];
@@ -20,13 +21,16 @@ export function getValidLocaleFromPathname(pathname: string) {
 	return isValidLocale(locale) ? locale : null;
 }
 
-export function getEntryFileName(pathname: string) {
-	const locale = getValidLocaleFromPathname(pathname);
 
-	if (locale) {
-		return pathname.endsWith(locale) ? `${pathname}/index` : pathname;
+export function getEntryFileName() {
+	const pathname = useLocation().pathname;
+	const currentRouteMetaData = useCurrentRouteMetaData();
+
+	if (currentRouteMetaData.isProjectRoot) {
+		return `${pathname}/index.mdx`.replace("//", "/");
 	} else {
-		return pathname !== "/" ? pathname : "/index";
+		// Trim trailing slash
+		return (pathname.endsWith("/") ? pathname.slice(0, -1) : pathname) + ".mdx";
 	}
 }
 
